@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+public/data/
+scripts/geocode_cache.json
+scripts/geocode_cache.json.tmp
+scripts/overpass_cache/
+node_modules/
+dist/

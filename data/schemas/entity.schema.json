@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Registry entity",
+  "description": "Canonical entity for the ro-edu-registry. Every entity in data/entities/*.json must validate against this schema.",
+  "type": "object",
+  "required": ["id", "kind", "name", "county", "source", "updated"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable identifier. Schools: 'siiir:<code>'. Others: 'slug:<slug>'.",
+      "pattern": "^(siiir|slug):\\S+$"
+    },
+    "kind": {
+      "enum": ["school", "highschool", "robotics-club", "university", "faculty", "student-org"]
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "county": {
+      "description": "2-letter county code (B for Bucharest).",
+      "type": "string",
+      "pattern": "^[A-Z]{1,2}$"
+    },
+    "env": {
+      "description": "URBAN / RURAL. Populated from the admitere feed for schools; null otherwise.",
+      "enum": ["URBAN", "RURAL", null]
+    },
+    "addr": { "type": ["string", "null"] },
+    "postcode": { "type": ["string", "null"] },
+    "coords": {
+      "description": "[lon, lat] in WGS84, or null until geocoded.",
+      "type": ["array", "null"],
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "coords_precision": {
+      "description": "How coords were obtained: poi = exact OSM object, village = village-center fallback, centroid = imprecise county-level geocode, geocode = school-level Nominatim geocode (default).",
+      "enum": ["poi", "village", "centroid", "geocode"]
+    },
+    "siiir": {
+      "description": "10-digit SIIIR unit code. Schools only.",
+      "type": "string",
+      "pattern": "^\\d{10}$"
+    },
+    "stats": {
+      "description": "Admission counts from admitere.edu.ro. null = unit absent from the stats feed (no 8th-grade cohort in this repartizare cycle), distinct from a real 0.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cand": { "type": ["integer", "null"], "minimum": 0 },
+        "rep": { "type": ["integer", "null"], "minimum": 0 },
+        "nerep": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": ["website", "facebook", "instagram", "discord", "whatsapp", "tiktok", "email", "phone", "other"]
+          },
+          "value": { "type": "string", "minLength": 3 },
+          "label": { "type": "string" },
+          "source": { "type": "string", "description": "Provenance of this link, e.g. osm, contributor." },
+          "verified": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "source": {
+      "description": "Provenance: admitere.edu.ro | osm | manual | contributor",
+      "type": "string",
+      "minLength": 1
+    },
+    "updated": { "type": "string", "format": "date" }
+  }
+}
