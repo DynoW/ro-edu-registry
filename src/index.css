@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@layer base {
+  a,
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+}

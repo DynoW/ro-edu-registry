@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "export": "python3 scripts/export.py"
+    "export": "python3 scripts/export.py",
+    "format:data": "python3 scripts/format_entities.py"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

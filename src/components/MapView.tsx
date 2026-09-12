@@ -4,10 +4,10 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import { Feature, KIND_META, Kind } from '../types'
-import { dataUrl } from '../config'
+import { dataUrl, REPO_URL } from '../config'
 import { KindFilter } from './KindFilter'
 import { SearchBar } from './SearchBar'
-import { SchoolModal } from './SchoolModal'
+import { EntityModal } from './EntityModal'
 
 const CENTER: [number, number] = [45.9432, 24.9668]
 
@@ -107,6 +107,15 @@ export function MapView() {
     return c
   }, [features])
 
+  const featureById = useMemo(
+    () => new Map(features.map((f) => [f.properties.id, f])),
+    [features],
+  )
+
+  const parentFeature = selected?.properties.parent
+    ? featureById.get(selected.properties.parent)
+    : undefined
+
   const toggleKind = (k: Kind) => {
     setActive((prev) => {
       const next = new Set(prev)
@@ -131,11 +140,23 @@ export function MapView() {
       <KindFilter counts={counts} active={active} onToggle={toggleKind} />
 
       <div className="absolute bottom-4 left-4 z-[500] rounded-lg bg-white/90 px-3 py-1.5 text-xs text-slate-600 shadow backdrop-blur">
-        {features.length.toLocaleString('ro-RO')} entități · sursă: admitere.edu.ro + OSM
+        {features.length.toLocaleString('ro-RO')} entități · sursă:{' '}
+        <a href="https://admitere.edu.ro" target="_blank" rel="noreferrer" className="font-medium text-slate-700 hover:text-slate-900 hover:underline">
+          admitere.edu.ro
+        </a>{' '}
+        +{' '}
+        <a href={`${REPO_URL}/graphs/contributors`} target="_blank" rel="noreferrer" className="font-medium text-slate-700 hover:text-slate-900 hover:underline">
+          contribuitori
+        </a>
       </div>
 
       {selected && (
-        <SchoolModal feature={selected} onClose={() => setSelected(null)} />
+        <EntityModal
+          feature={selected}
+          parentFeature={parentFeature}
+          onSelectParent={focusFeature}
+          onClose={() => setSelected(null)}
+        />
       )}
     </div>
   )

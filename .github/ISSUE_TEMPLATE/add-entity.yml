@@ -1,0 +1,61 @@
+name: Add missing entity
+description: Report a school, university, club or student organization that is missing from the registry.
+labels: ["add-entity", "good-first-issue"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Entity type
+      options:
+        - school
+        - highschool
+        - robotics-club
+        - university
+        - faculty
+        - student-org
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Full name
+      description: Exactly as the institution writes it (diacritics included).
+      placeholder: Colegiul Național „Mircea cel Bătrân”
+    validations:
+      required: true
+  - type: input
+    id: county
+    attributes:
+      label: County code
+      description: 2-letter code — CJ, TM, B (Bucharest), …
+      placeholder: CJ
+    validations:
+      required: true
+  - type: input
+    id: city
+    attributes:
+      label: City / commune
+      placeholder: Cluj-Napoca
+    validations:
+      required: true
+  - type: input
+    id: siiir
+    attributes:
+      label: SIIIR code (schools only)
+      description: 10-digit unit code from siir.edu.ro. Leave empty for non-schools.
+  - type: textarea
+    id: links
+    attributes:
+      label: Links / contacts
+      description: Official website, Facebook, email, phone — anything you know.
+      placeholder: |
+        website: https://example.edu.ro
+        email: secretariat@example.edu.ro
+  - type: textarea
+    id: source
+    attributes:
+      label: Where did you find this?
+      description: Helps us verify and trace the data.
+      placeholder: School website, FIRST Romania team list, …
+    validations:
+      required: true

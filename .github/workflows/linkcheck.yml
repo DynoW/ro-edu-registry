@@ -1,0 +1,68 @@
+# name: Link check
+
+# on:
+#   schedule:
+#     - cron: '0 4 * * 1' # Mondays 04:00 UTC
+#   workflow_dispatch:
+
+# permissions:
+#   contents: read
+#   issues: write
+
+# concurrency:
+#   group: linkcheck
+#   cancel-in-progress: false
+
+# jobs:
+#   linkcheck:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+#       - run: pip install httpx
+#       - name: Check all registry links
+#         run: python3 scripts/linkcheck.py
+#       - name: Count dead links
+#         id: report
+#         run: echo "count=$(python3 -c "import json;print(len(json.load(open('public/data/linkcheck.json'))))")" >> "$GITHUB_OUTPUT"
+#       - name: Open or update the dead-links issue
+#         if: steps.report.outputs.count != '0' && steps.report.outputs.count != ''
+#         uses: actions/github-script@v7
+#         with:
+#           script: |
+#             const fs = require('fs');
+#             const dead = JSON.parse(fs.readFileSync('public/data/linkcheck.json', 'utf8'));
+#             const title = '🔗 Weekly link check: dead links found';
+#             const body = [
+#               `Found **${dead.length} dead link(s)** in the canonical registry (checked ${new Date().toISOString().slice(0, 10)}).`,
+#               '',
+#               'Full report artifact: `linkcheck` from the latest "Link check" run.',
+#               '',
+#               ...dead.map(d => `- [${d.error}] [${d.value}](${d.value}) — \`${d.entity}\` (${d.name}, link type: ${d.type})`),
+#               '',
+#               'Fix by opening a PR or a data-correction issue referencing the entity id.',
+#             ].join('\n');
+#             const existing = await github.rest.issues.listForRepo({
+#               owner: context.repo.owner, repo: context.repo.repo,
+#               state: 'open', labels: 'linkcheck', per_page: 1,
+#             });
+#             if (existing.data.length) {
+#               await github.rest.issues.update({
+#                 owner: context.repo.owner, repo: context.repo.repo,
+#                 issue_number: existing.data[0].number, title, body,
+#               });
+#             } else {
+#               await github.rest.issues.create({
+#                 owner: context.repo.owner, repo: context.repo.repo,
+#                 title, body, labels: ['linkcheck'],
+#               });
+#             }
+#       - uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: linkcheck
+#           path: public/data/linkcheck.json
+#           if-no-files-found: ignore
+#           retention-days: 30

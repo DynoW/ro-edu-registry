@@ -1,0 +1,35 @@
+# Data license — ODbL v1.0
+
+The registry data in [`data/entities/`](data/entities/) and all files derived
+from it (`registry.geojson`, `registry.csv`, `search.json`, `coverage.json`)
+are made available under the **Open Database License (ODbL) v1.0**:
+https://opendatacommons.org/licenses/odbl/1.0/
+
+Summary (not a substitute for the license text):
+
+- **Share**: you may copy, distribute and use the data freely.
+- **Adapt**: you may create derivative databases and products from it.
+- **Attribute**: you must credit this project and its data sources.
+- **Share-alike**: if you publicly release a derived database, it must also
+  be offered under the ODbL.
+
+## Required attribution
+
+When using or redistributing the data, include a notice such as:
+
+> Data source: [ro-edu-registry](https://github.com/DynoW/ro-edu-registry)
+> (ODbL), built from [admitere.edu.ro](https://admitere.edu.ro) and
+> [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright)
+> (ODbL).
+
+## Upstream sources
+
+| Source | License |
+| :--- | :--- |
+| OpenStreetMap (coordinates, contact tags) | ODbL 1.0 — © OpenStreetMap contributors |
+| admitere.edu.ro (school list, admission stats) | Public data from the Romanian Ministry of Education |
+| Contributor submissions | Licensed to this project under ODbL-compatible terms |
+
+Maps rendered by the frontend use OpenStreetMap raster tiles, which remain
+© OpenStreetMap contributors and must be attributed on-screen (the app does
+this in the map footer).

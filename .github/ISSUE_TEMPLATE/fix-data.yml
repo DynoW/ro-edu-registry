@@ -1,0 +1,33 @@
+name: Fix wrong data
+description: Report an incorrect name, address, contact link or location for an existing entry.
+labels: ["fix-data"]
+body:
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong?
+      description: One issue per report, please.
+      placeholder: The website points to a defunct domain.
+    validations:
+      required: true
+  - type: input
+    id: siiir
+    attributes:
+      label: Entity id
+      description: Shown in the map modal, e.g. siiir:1234567890 or slug:osut-cluj. The "Report a correction" link on the map prefills this.
+      placeholder: siiir:1234567890
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Correct value
+      description: The exact replacement value(s), with source if possible.
+      placeholder: website → https://cnmb.ro (confirmed on the school's official page)
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Evidence / source
+      description: A link to the official page or other proof helps fast-track the fix.

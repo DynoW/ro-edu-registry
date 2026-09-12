@@ -1,12 +1,12 @@
-"""OSM + village enrichment: fixes missing coords and harvests contact links.
+"""OpenStreetMap + village enrichment: fixes missing coords and harvests contact links.
 
 Phase A: per-county Overpass pull of named school objects (cached on disk).
 Phase B: match canonical entities (missing coords, or centroid-flagged coords)
-         to OSM objects by normalized name + locality -> OSM coords (precision 'poi').
+         to OSM objects by normalized name + locality -> OSM coords (precision 'building').
 Phase C: harvest website/email/phone tags from matched OSM objects into links
-         (source: osm, verified: false).
+         (source: openstreetmap, verified: false).
 Phase D: village-level Nominatim fallback for entities still without coords
-         (locality extracted from the name) -> precision 'village'.
+         (locality extracted from the name) -> precision 'locality'.
 
 Reads/writes the canonical registry in place: data/entities/schools.json
 """
@@ -155,7 +155,7 @@ def links_from_tags(tags: dict) -> list[dict]:
         for value in (tags.get(key) or "").split(";"):
             value = value.strip()
             if value and all((l["type"], l["value"]) != (ltype, value) for l in links):
-                links.append({"type": ltype, "value": value, "source": "osm", "verified": False})
+                links.append({"type": ltype, "value": value, "source": "openstreetmap", "verified": False})
     return links
 
 
@@ -224,10 +224,10 @@ def main() -> None:
         for e in entities if e["coords"]
     )
     for e in entities:
-        if e["coords"] and not e.get("coords_precision"):
+        if e["coords"] and e.get("coords_precision") in (None, "address"):
             key = (e["county"], round(e["coords"][0], 6), round(e["coords"][1], 6))
             if coord_counts[key] >= CENTROID_MIN_SHARED:
-                e["coords_precision"] = "centroid"
+                e["coords_precision"] = "area"
 
     # --- Phase A2: pull OSM candidates for all counties
     candidates_by_county = {}
@@ -254,11 +254,11 @@ def main() -> None:
             continue
         if not e["coords"]:
             e["coords"] = m["coords"]
-            e["coords_precision"] = "poi"
+            e["coords_precision"] = "building"
             fixed_poi += 1
-        elif e.get("coords_precision") == "centroid":
+        elif e.get("coords_precision") == "area":
             e["coords"] = m["coords"]
-            e["coords_precision"] = "poi"
+            e["coords_precision"] = "building"
             centroid_fixed += 1
         have = {(l["type"], l["value"]) for l in e["links"]}
         for link in links_from_tags(m["tags"]):
@@ -277,7 +277,7 @@ def main() -> None:
     fixed_village = 0
     remaining = [
         e for e in entities
-        if (not e["coords"] or e.get("coords_precision") == "centroid") and village_candidates(e["name"])
+        if (not e["coords"] or e.get("coords_precision") == "area") and village_candidates(e["name"])
     ]
     print(f"Village fallback for {len(remaining)} entities...", flush=True)
     with httpx.Client(headers=UA, timeout=15.0, follow_redirects=True) as client:
@@ -286,7 +286,7 @@ def main() -> None:
                 coords = village_geocode(client, limiter, raw_loc, e["county"], vcache)
                 if coords:
                     e["coords"] = coords
-                    e["coords_precision"] = "village"
+                    e["coords_precision"] = "locality"
                     fixed_village += 1
                     break
             if i % 50 == 0:

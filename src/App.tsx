@@ -32,7 +32,7 @@ export default function App() {
       <header className="z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
         <div className="flex items-baseline gap-2">
           <span className="text-base font-bold text-slate-900">ro-edu-registry</span>
-          <span className="hidden text-xs text-slate-400 sm:inline">harta educației și a vieții studențești</span>
+          <span className="hidden text-xs text-slate-400 sm:inline">harta educației din România</span>
         </div>
         <nav className="flex gap-1">
           {NAV.map((n) => (

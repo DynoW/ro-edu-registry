@@ -6,23 +6,31 @@ export type Kind =
   | 'faculty'
   | 'student-org'
 
-export type CoordsPrecision = 'poi' | 'village' | 'centroid' | 'geocode'
+export type CoordsPrecision = 'building' | 'address' | 'locality' | 'area'
+
+export interface LinkRef {
+  t: string
+  v: string
+  l?: string
+  ok?: boolean
+}
 
 export interface EntityProps {
   id: string
   kind: Kind
   name: string
   county: string
-  env: string | null
-  addr: string | null
-  postcode: string | null
-  cand: number | null
-  rep: number | null
-  nerep: number | null
-  phone: string
-  website: string
-  email: string
-  coords_precision: CoordsPrecision | null
+  city?: string
+  parent?: string
+  external_ids?: Record<string, string | number>
+  env?: string | null
+  addr?: string | null
+  postcode?: string | null
+  cand?: number | null
+  rep?: number | null
+  nerep?: number | null
+  coords_precision?: CoordsPrecision | null
+  links?: LinkRef[]
 }
 
 export interface Feature {
@@ -49,6 +57,17 @@ export const KINDS: KindMeta[] = [
 export const KIND_META: Record<Kind, KindMeta> = Object.fromEntries(
   KINDS.map((k) => [k.id, k]),
 ) as Record<Kind, KindMeta>
+
+export const KIND_SINGULAR: Record<Kind, string> = {
+  school: 'Școală',
+  highschool: 'Liceu',
+  university: 'Universitate',
+  faculty: 'Facultate',
+  'robotics-club': 'Club robotică',
+  'student-org': 'Asociație studențească',
+}
+
+export const isSchoolKind = (kind: Kind): boolean => kind === 'school' || kind === 'highschool'
 
 export interface Coverage {
   generated: string

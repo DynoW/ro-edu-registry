@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Coverage } from '../types'
-import { dataUrl } from '../config'
+import { REPO_URL, dataUrl } from '../config'
 
 const EXPORTS = [
   { file: 'registry.csv', label: 'registry.csv', desc: 'Listă de outreach: județ, denumire, mediu, adresă, link, email, telefon, kind (format Excel-friendly).' },
@@ -62,8 +62,17 @@ export function ExportPage() {
       </ul>
 
       <p className="mt-6 text-xs text-slate-400">
-        Licență date: ODbL / CC BY-SA — include date derivate din OpenStreetMap. Contactele sunt adrese
-        instituționale; excludem datele cu caracter personal.
+        Licență date: ODbL 1.0 — registrul include date derivate din OpenStreetMap (© contribuitorii
+        OpenStreetMap), ceea ce impune ODbL pentru tot pachetul de date, inclusiv registry.csv și
+        coverage.json; vezi{' '}
+        <a
+          href={`${REPO_URL}/blob/main/LICENSE-DATA`}
+          className="underline decoration-slate-300 underline-offset-2 hover:text-slate-600"
+        >
+          LICENSE-DATA
+        </a>{' '}
+        pentru nota de atribuire. Contactele sunt adrese instituționale publice; fișierele nu conțin
+        date cu caracter personal.
       </p>
     </div>
   )

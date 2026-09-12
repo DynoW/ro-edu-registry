@@ -15,10 +15,19 @@
       "enum": ["school", "highschool", "robotics-club", "university", "faculty", "student-org"]
     },
     "name": { "type": "string", "minLength": 1 },
+    "parent": {
+      "description": "Id of the parent entity (e.g. the university a faculty belongs to, or the host school of a robotics club). Optional; omit for top-level entities.",
+      "type": "string",
+      "pattern": "^(siiir|slug):\\S+$"
+    },
     "county": {
       "description": "2-letter county code (B for Bucharest).",
       "type": "string",
       "pattern": "^[A-Z]{1,2}$"
+    },
+    "city": {
+      "description": "City or commune. Populated for manually added entities; schools carry the full address in addr instead.",
+      "type": "string"
     },
     "env": {
       "description": "URBAN / RURAL. Populated from the admitere feed for schools; null otherwise.",
@@ -34,8 +43,15 @@
       "maxItems": 2
     },
     "coords_precision": {
-      "description": "How coords were obtained: poi = exact OSM object, village = village-center fallback, centroid = imprecise county-level geocode, geocode = school-level Nominatim geocode (default).",
-      "enum": ["poi", "village", "centroid", "geocode"]
+      "description": "How coords were obtained, best to coarsest: building = exact OpenStreetMap object (school building/POI); address = geocoded from the entity's name/address (the default when this field is absent); locality = center of the locality (village/city); area = centroid of a larger OpenStreetMap area polygon (e.g. campus), or a shared fallback point — least precise.",
+      "enum": ["building", "address", "locality", "area"]
+    },
+    "external_ids": {
+      "description": "Identifiers in external programs/systems, e.g. {\"ftc\": 32744} for a FIRST Tech Challenge team number. Keys are lowercase program slugs (ftc, fll, frc, vex, …).",
+      "type": "object",
+      "additionalProperties": { "type": ["string", "integer"] },
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "minProperties": 1
     },
     "siiir": {
       "description": "10-digit SIIIR unit code. Schools only.",
@@ -60,19 +76,24 @@
         "additionalProperties": false,
         "properties": {
           "type": {
-            "enum": ["website", "facebook", "instagram", "discord", "whatsapp", "tiktok", "email", "phone", "other"]
+            "enum": ["website", "facebook", "instagram", "youtube", "linkedin", "discord", "whatsapp", "tiktok", "email", "phone", "other"]
           },
           "value": { "type": "string", "minLength": 3 },
           "label": { "type": "string" },
-          "source": { "type": "string", "description": "Provenance of this link, e.g. osm, contributor." },
+          "source": { "type": "string", "description": "Provenance of this link, e.g. openstreetmap, manual, the institution's own site." },
           "verified": { "type": "boolean", "default": false }
         }
       }
     },
     "source": {
-      "description": "Provenance: admitere.edu.ro | osm | manual | contributor",
+      "description": "Provenance of the entity data: the origin domain (admitere.edu.ro, upb.ro, …), openstreetmap (harvested from OpenStreetMap tags), or manual (added/corrected by a person).",
       "type": "string",
       "minLength": 1
+    },
+    "added_by": {
+      "description": "GitHub username of the person who added or corrected this entity (credit; the authoritative record is git history).",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$"
     },
     "updated": { "type": "string", "format": "date" }
   }

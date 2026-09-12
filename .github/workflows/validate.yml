@@ -5,8 +5,13 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
+  data:
+    name: Data schema + export determinism
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +21,32 @@ jobs:
       - run: pip install jsonschema
       - name: Validate canonical entities against JSON Schema
         run: python3 scripts/validate.py
+      - name: Check canonical field order
+        run: python3 scripts/format_entities.py --check
+      - name: Export derived data twice and diff (determinism check)
+        run: |
+          python3 scripts/export.py
+          cp -r public/data /tmp/export-run-1
+          python3 scripts/export.py
+          diff -r /tmp/export-run-1 public/data
+
+  frontend:
+    name: Frontend typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install httpx
+      - name: Generate derived data (frontend reads public/data/)
+        run: python3 scripts/export.py
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npm run build

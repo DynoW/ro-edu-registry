@@ -1,6 +1,6 @@
 """Phase 2 geocoder: converts schools_raw.json to coordinate-enriched GeoJSON.
 
-Geocodes each school against the OSM Nominatim API with a 1 request/second
+Geocodes each school against the OpenStreetMap Nominatim API with a 1 request/second
 pace, a local on-disk cache (resumable across runs), a three-step fallback
 chain (full query, address-only, name+county), and Romania-restricted results.
 

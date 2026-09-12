@@ -14,12 +14,15 @@ export function SearchBar({ features, onSelect }: Props) {
   const results = useMemo(() => {
     const nq = norm(q)
     if (nq.length < 3) return []
+    const extIds = (f: Feature) => Object.values(f.properties.external_ids ?? {}).map(String).join(' ')
+    const phones = (f: Feature) => (f.properties.links ?? []).filter((l) => l.t === 'phone').map((l) => l.v).join(' ')
     return features
       .filter(
         (f) =>
           norm(f.properties.name).includes(nq) ||
           norm(f.properties.id).includes(nq) ||
-          norm(f.properties.phone).includes(nq),
+          norm(phones(f)).includes(nq) ||
+          norm(extIds(f)).includes(nq),
       )
       .slice(0, 8)
   }, [q, features])

@@ -24,6 +24,26 @@ UPDATED = date.today().isoformat()
 KINDS = {"school", "highschool", "robotics-club", "university", "faculty", "student-org"}
 SIIIR_RE = re.compile(r"^\d{10}$")
 COUNTY_RE = re.compile(r"^[A-Z]{1,2}$")
+NON_DIGIT_RE = re.compile(r"\D")
+NO_ADDR_RE = re.compile(r"\bnu\s+are\b", re.I)
+
+
+def clean_addr(addr: str | None) -> str | None:
+    """Feed junk like 'nu are 349' / 'principală nu are' → None / 'Principală'."""
+    if not addr:
+        return None
+    cleaned = re.sub(r"\s+", " ", NO_ADDR_RE.sub(" ", addr)).strip(" ,;-")
+    if not cleaned or re.fullmatch(r"\d+[a-z]?", cleaned, re.I):
+        return None  # nothing left, or a bare house number without a street
+    return cleaned
+
+
+def phone_digits(value: str) -> str:
+    """Normalize RO phone formats: 0213149311 / +40213149311 / 40213149311 all → 213149311."""
+    d = NON_DIGIT_RE.sub("", value)
+    if d.startswith("40") and len(d) >= 11:
+        d = d[2:]
+    return d[1:] if d.startswith("0") else d
 
 
 def load_coords() -> dict:
@@ -34,15 +54,19 @@ def load_coords() -> dict:
 
 def to_entity(raw: dict, coords) -> dict:
     links = [{"type": "phone", "value": raw["tel"]}] if raw.get("tel") else []
-    return {
+    entity = {
         "id": f"siiir:{raw['id']}",
         "kind": raw["kind"],
         "name": raw["name"],
         "county": raw["county"],
         "env": raw.get("env") or None,
-        "addr": raw.get("addr") or None,
+        "addr": clean_addr(raw.get("addr")),
         "postcode": raw.get("postcode") or None,
         "coords": coords,
+    }
+    if coords is not None:
+        entity["coords_precision"] = "address"  # geocoder output is name/address-level; enrich_osm upgrades it
+    entity.update({
         "siiir": raw["id"],
         "stats": {
             "cand": raw.get("cand"),
@@ -52,7 +76,8 @@ def to_entity(raw: dict, coords) -> dict:
         "links": links,
         "source": "admitere.edu.ro",
         "updated": UPDATED,
-    }
+    })
+    return entity
 
 
 def validate(entities: list[dict]) -> None:
@@ -94,24 +119,55 @@ def load_existing(path: Path) -> dict:
         return {}
 
 
-STICKY_PRECISIONS = {"poi", "village"}  # deliberate overrides that survive reruns
+STICKY_PRECISIONS = {"building", "locality", "area"}  # deliberate overrides that survive reruns
+
+
+def _insert_precision(entity: dict, precision: str) -> dict:
+    """Place coords_precision right after coords to keep the canonical key order."""
+    out = {}
+    for k, v in entity.items():
+        if k == "coords_precision":
+            continue  # replaced by the sticky value at the coords position
+        out[k] = v
+        if k == "coords":
+            out["coords_precision"] = precision
+    if "coords_precision" not in out:
+        out["coords_precision"] = precision
+    return out
 
 
 def merge_existing(new: dict, old: dict | None) -> dict:
-    """Pipeline data wins by default; hand/enricher edits (coords via OSM or
+    """Pipeline data wins by default; hand/enricher edits (coords via OpenStreetMap or
     village geocodes, extra links) are preserved on reruns."""
     if not old:
         return new
-    if old.get("coords_precision") in STICKY_PRECISIONS and old.get("coords"):
+    # Absent coords_precision in pre-2026-09 records means "address" (the default)
+    if old.get("coords") and "coords_precision" not in old:
+        old = {**old, "coords_precision": "address"}
+    sticky = None
+    if new["coords"] is None and old.get("coords"):
+        # Fresh pipeline run found no coordinates: keep the existing ones (hand
+        # geocodes or output of a previous run) instead of wiping them.
         new["coords"] = old["coords"]
-        new["coords_precision"] = old["coords_precision"]
+        sticky = old["coords_precision"]
+    elif old.get("coords_precision") in STICKY_PRECISIONS and old.get("coords"):
+        new["coords"] = old["coords"]
+        sticky = old["coords_precision"]
     elif old.get("coords_precision") and "coords_precision" not in new:
-        new["coords_precision"] = old["coords_precision"]
+        sticky = old["coords_precision"]
+    if sticky:
+        new = _insert_precision(new, sticky)
     have = {(l["type"], l["value"]) for l in new["links"]}
+    have_phone_digits = {phone_digits(l["value"]) for l in new["links"] if l["type"] == "phone"}
     for link in old.get("links", []):
-        if (link["type"], link["value"]) not in have:
-            new["links"].append(link)
-            have.add((link["type"], link["value"]))
+        if (link["type"], link["value"]) in have:
+            continue
+        if link["type"] == "phone" and phone_digits(link["value"]) in have_phone_digits:
+            continue  # same number, different format (e.g. 0213149311 vs +40213149311)
+        new["links"].append(link)
+        have.add((link["type"], link["value"]))
+        if link["type"] == "phone":
+            have_phone_digits.add(phone_digits(link["value"]))
     unchanged = {k: v for k, v in new.items() if k != "updated"} == {k: v for k, v in old.items() if k != "updated"}
     if unchanged:
         new["updated"] = old["updated"]

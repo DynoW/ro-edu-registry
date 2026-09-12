@@ -5,6 +5,6 @@ export const REPO_URL = 'https://github.com/DynoW/ro-edu-registry'
 export const dataUrl = (file: string): string => `${import.meta.env.BASE_URL}data/${file}`
 
 export const ISSUE_TEMPLATES = {
-  addEntity: 'add-entity.md',
-  fixData: 'fix-data.md',
+  addEntity: 'add-entity.yml',
+  fixData: 'fix-data.yml',
 }

@@ -43,6 +43,43 @@ def website_of(entity: dict) -> str:
     return ""
 
 
+def links_of(entity: dict) -> list[dict]:
+    """Compact link objects for map/search payloads: {t, v, l?, ok?}."""
+    out = []
+    for link in entity.get("links", []):
+        compact = {"t": link["type"], "v": link["value"]}
+        if link.get("label"):
+            compact["l"] = link["label"]
+        if link.get("verified"):
+            compact["ok"] = True
+        out.append(compact)
+    return out
+
+
+def base_props(entity: dict) -> dict:
+    props = {
+        "id": entity["id"],
+        "kind": entity["kind"],
+        "name": entity["name"],
+        "county": entity["county"],
+    }
+    for key in ("city", "parent", "env", "addr", "postcode"):
+        if entity.get(key):
+            props[key] = entity[key]
+    if entity.get("external_ids"):
+        props["external_ids"] = entity["external_ids"]
+    if entity["kind"] in ("school", "highschool"):
+        stats = entity.get("stats") or {}
+        props["cand"] = stats.get("cand")
+        props["rep"] = stats.get("rep")
+        props["nerep"] = stats.get("nerep")
+    if entity.get("coords_precision"):
+        props["coords_precision"] = entity["coords_precision"]
+    if entity.get("links"):
+        props["links"] = links_of(entity)
+    return props
+
+
 def export_geojson(entities: list[dict], path: Path) -> int:
     features = []
     for e in entities:
@@ -51,22 +88,7 @@ def export_geojson(entities: list[dict], path: Path) -> int:
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": e["coords"]},
-            "properties": {
-                "id": e["id"],
-                "kind": e["kind"],
-                "name": e["name"],
-                "county": e["county"],
-                "env": e.get("env"),
-                "addr": e.get("addr"),
-                "postcode": e.get("postcode"),
-                "cand": e.get("stats", {}).get("cand"),
-                "rep": e.get("stats", {}).get("rep"),
-                "nerep": e.get("stats", {}).get("nerep"),
-                "phone": first_link_of(e, "phone"),
-                "website": website_of(e),
-                "email": first_link_of(e, "email"),
-                "coords_precision": e.get("coords_precision"),
-            },
+            "properties": base_props(e),
         })
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"type": "FeatureCollection", "features": features}, f, separators=(",", ":"))
@@ -93,20 +115,12 @@ def export_csv(entities: list[dict], path: Path) -> None:
 
 def export_search(entities: list[dict], path: Path) -> int:
     """Lean, coord-free records for the no-WebGL search page."""
-    records = [
-        {
-            "id": e["id"],
-            "kind": e["kind"],
-            "name": e["name"],
-            "county": e["county"],
-            "addr": e.get("addr"),
-            "postcode": e.get("postcode"),
+    records = []
+    for e in sorted(entities, key=lambda x: (x["county"], x["name"])):
+        records.append({
+            **base_props(e),
             "phone": first_link_of(e, "phone"),
-            "website": first_link_of(e, "website"),
-            "email": first_link_of(e, "email"),
-        }
-        for e in sorted(entities, key=lambda x: (x["county"], x["name"]))
-    ]
+        })
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"generated": GENERATED, "entities": records}, f, ensure_ascii=False, separators=(",", ":"))
     return len(records)

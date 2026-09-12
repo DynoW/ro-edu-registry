@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { KIND_META, KINDS, Kind } from '../types'
+import { KIND_META, KINDS, Kind, KIND_SINGULAR, LinkRef, isSchoolKind } from '../types'
 import { countyName, COUNTY_NAMES } from '../counties'
 import { norm } from '../utils'
 import { dataUrl } from '../config'
+import { LinkChips, parentLabel } from '../components/LinkChips'
 
 interface SearchEntry {
   id: string
   kind: Kind
   name: string
   county: string
-  addr: string | null
-  postcode: string | null
-  phone: string
-  website: string
-  email: string
+  parent?: string
+  external_ids?: Record<string, string | number>
+  addr?: string | null
+  postcode?: string | null
+  phone?: string
+  links?: LinkRef[]
 }
 
 const PAGE = 200
@@ -43,6 +45,7 @@ export function SearchPage() {
 
   const filtered = useMemo(() => {
     const nq = norm(q)
+    const ids = (e: SearchEntry) => Object.values(e.external_ids ?? {}).map(String).join(' ')
     return (entries ?? []).filter(
       (e) =>
         kinds.has(e.kind) &&
@@ -50,7 +53,8 @@ export function SearchPage() {
         (nq.length < 2 ||
           norm(e.name).includes(nq) ||
           norm(e.id).includes(nq) ||
-          norm(e.phone).includes(nq) ||
+          norm(e.phone ?? '').includes(nq) ||
+          norm(ids(e)).includes(nq) ||
           norm(e.addr ?? '').includes(nq)),
     )
   }, [entries, q, county, kinds])
@@ -64,6 +68,11 @@ export function SearchPage() {
     })
     setVisible(PAGE)
   }
+
+  const nameById = useMemo(
+    () => new Map((entries ?? []).map((e) => [e.id, e.name])),
+    [entries],
+  )
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
@@ -142,29 +151,18 @@ export function SearchPage() {
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="text-sm font-semibold text-slate-800">{e.name}</span>
                 <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white" style={{ backgroundColor: meta?.color }}>
-                  {countyName(e.county)}
+                  {isSchoolKind(e.kind) ? countyName(e.county) : `${countyName(e.county)} · ${KIND_SINGULAR[e.kind]}`}
                 </span>
               </div>
+              {e.parent && (
+                <div className="mt-0.5 text-xs italic text-slate-500">
+                  {parentLabel(e.kind)} {nameById.get(e.parent) ?? e.parent.replace(/^(siiir|slug):/, '')}
+                </div>
+              )}
               {(e.addr || e.postcode) && (
                 <div className="mt-0.5 text-xs text-slate-400">{[e.addr, e.postcode].filter(Boolean).join(', ')}</div>
               )}
-              <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                {e.phone && (
-                  <a href={`tel:${e.phone}`} className="rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-700 hover:bg-slate-200">
-                    {e.phone}
-                  </a>
-                )}
-                {e.website && (
-                  <a href={e.website} target="_blank" rel="noreferrer" className="rounded-lg bg-sky-50 px-2 py-1 font-medium text-sky-700 hover:bg-sky-100">
-                    website
-                  </a>
-                )}
-                {e.email && (
-                  <a href={`mailto:${e.email}`} className="rounded-lg bg-emerald-50 px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-100">
-                    {e.email}
-                  </a>
-                )}
-              </div>
+              <LinkChips links={e.links} />
             </li>
           )
         })}
