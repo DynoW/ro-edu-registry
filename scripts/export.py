@@ -14,7 +14,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from geocoder import COUNTY_NAMES
+from counties import COUNTY_NAMES
 
 ENTITIES_DIR = Path("data/entities")
 OUT_DIR = Path("public/data")

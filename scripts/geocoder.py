@@ -16,6 +16,8 @@ import urllib.parse
 
 import httpx
 
+from counties import COUNTY_NAMES
+
 
 class RateLimited(RuntimeError):
     """Nominatim kept returning 429 after exhausting backoff retries."""
@@ -37,20 +39,6 @@ class RateLimiter:
 CACHE_FILE = "scripts/geocode_cache.json"
 RAW_FILE = "public/data/schools_raw.json"
 OUTPUT_FILE = "public/data/schools.geojson"
-
-COUNTY_NAMES = {
-    "AB": "Alba", "AR": "Arad", "AG": "Argeș", "BC": "Bacău", "BH": "Bihor",
-    "BN": "Bistrița-Năsăud", "BT": "Botoșani", "BV": "Brașov", "BR": "Brăila",
-    "BZ": "Buzău", "CS": "Caraș-Severin", "CL": "Călărași", "CJ": "Cluj",
-    "CT": "Constanța", "CV": "Covasna", "DB": "Dâmbovița", "DJ": "Dolj",
-    "GL": "Galați", "GR": "Giurgiu", "GJ": "Gorj", "HR": "Harghita",
-    "HD": "Hunedoara", "IL": "Ialomița", "IS": "Iași", "IF": "Ilfov",
-    "MM": "Maramureș", "MH": "Mehedinți", "MS": "Mureș", "NT": "Neamț",
-    "OT": "Olt", "PH": "Prahova", "SM": "Satu Mare", "SJ": "Sălaj",
-    "SB": "Sibiu", "SV": "Suceava", "TR": "Teleorman", "TM": "Timiș",
-    "TL": "Tulcea", "VS": "Vaslui", "VL": "Vâlcea", "VN": "Vrancea",
-    "B": "București"
-}
 
 
 def load_cache() -> dict:

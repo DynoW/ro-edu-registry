@@ -5,7 +5,7 @@ import { REPO_URL, dataUrl } from '../config'
 const EXPORTS = [
   { file: 'registry.csv', label: 'registry.csv', desc: 'Listă de outreach: județ, denumire, mediu, adresă, link, email, telefon, kind (format Excel-friendly).' },
   { file: 'registry.geojson', label: 'registry.geojson', desc: 'GeoJSON cu toate entitățile geocalibrate — pentru hărți și alte aplicații.' },
-  { file: 'coverage.json', label: 'coverage.json', desc: 'Completitudinea datelor per județ (dashboard contribuții).' },
+  { file: 'coverage.json', label: 'coverage.json', desc: 'Completitudinea datelor per județ.' },
 ]
 
 export function ExportPage() {

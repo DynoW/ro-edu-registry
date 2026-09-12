@@ -21,7 +21,8 @@ from pathlib import Path
 
 import httpx
 
-from geocoder import COUNTY_NAMES, RateLimiter
+from counties import COUNTY_NAMES
+from geocoder import RateLimiter
 
 REGISTRY = Path("data/entities/schools.json")
 OVERPASS_CACHE = Path("scripts/overpass_cache")
